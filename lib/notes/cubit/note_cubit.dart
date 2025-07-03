@@ -37,6 +37,7 @@ class NotesCubit extends Cubit<NotesState> {
             print('Firestore error: $e');
           },
         );
+        
   }
 
 void cancelSubscription() {
@@ -71,6 +72,7 @@ void cancelSubscription() {
   @override
   Future<void> close() {
     _notesSub?.cancel();
+    cancelSubscription();
     return super.close();
   }
 }

@@ -33,14 +33,17 @@ class AuthCubit extends Cubit<AuthState> {
         password: password,
       );
 
-      final doc = await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .get();
-      final appUser = AppUser.fromFirebase(userCredential.user!, doc.data());
+      final user = userCredential.user;
+      if (user != null) {
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        final appUser = AppUser.fromFirebase(user, doc.data());
 
-      emit(AuthState.authenticated(appUser));
-      return true;
+        emit(AuthState.authenticated(appUser));
+        return true;
+      } else {
+        emit(const AuthState.unauthenticated());
+        return false;
+      }
     } catch (e) {
       emit(const AuthState.unauthenticated());
       return false;
@@ -74,10 +77,9 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
- void logout(BuildContext context) async {
+  void logout(BuildContext context) async {
     context.read<NotesCubit>().cancelSubscription();
     await _auth.signOut();
     emit(const AuthState.unauthenticated());
   }
-
 }
