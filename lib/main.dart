@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:note_app/auth/auth_status.dart';
 import 'package:note_app/auth/cubit/auth_cubit.dart';
 import 'package:note_app/auth/view/signin_page.dart';
+import 'package:note_app/custom_widgets/shimmer_loader.dart';
 import 'package:note_app/firebase_options.dart';
 import 'package:note_app/notes/cubit/note_cubit.dart';
 import 'package:note_app/notes/view/notes_page.dart';
@@ -26,12 +27,15 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(scaffoldBackgroundColor: Colors.white),
+        theme: ThemeData(
+          scaffoldBackgroundColor: Colors.white,
+          appBarTheme: AppBarTheme(backgroundColor: Colors.white),
+        ),
         home: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
             if (state.status == AuthStatus.loading) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+              return  Scaffold(
+                body: homeScreen(),
               );
             } else if (state.status == AuthStatus.authenticated) {
               return const NotesPage();

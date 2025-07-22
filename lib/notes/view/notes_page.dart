@@ -3,8 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:note_app/auth/auth_status.dart';
 import 'package:note_app/auth/view/signin_page.dart';
+import 'package:note_app/custom_widgets/shimmer_loader.dart';
+import 'package:note_app/models/note_model.dart';
 import 'package:note_app/notes/cubit/note_cubit.dart';
 import 'package:note_app/notes/cubit/notes_status.dart';
+import 'package:note_app/notes/view/note_detail.dart';
+import 'package:note_app/notes/view/notes_input.dart';
 import '../../auth/cubit/auth_cubit.dart';
 
 class NotesPage extends StatefulWidget {
@@ -23,41 +27,8 @@ class _NotesPageState extends State<NotesPage> {
     context.read<NotesCubit>().listenToNotes(user.uid);
   }
 
-  void _openNoteDialog() {
-    final titleController = TextEditingController();
-    final messageController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("New Note"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            TextField(
-              controller: messageController,
-              decoration: const InputDecoration(labelText: 'Message'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              context.read<NotesCubit>().addNote(
-                user.uid,
-                titleController.text,
-                messageController.text,
-              );
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          ),
-        ],
-      ),
-    );
+  void _openNoteDialog() async {
+    await showDialog(context: context, builder: (_) => NoteInputDialog());
   }
 
   @override
@@ -96,7 +67,7 @@ class _NotesPageState extends State<NotesPage> {
         body: BlocBuilder<NotesCubit, NotesState>(
           builder: (context, state) {
             if (state.status == NotesStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return notesList();
             } else if (state.status == NotesStatus.failure) {
               return Center(child: Text('Error: ${state.errorMessage}'));
             } else if (state.notes.isEmpty) {
@@ -108,66 +79,178 @@ class _NotesPageState extends State<NotesPage> {
                 crossAxisCount: isTablet ? 2 : 1,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                mainAxisExtent: isTablet ? 140 : 120,
+                mainAxisExtent: isTablet ? 120 : 100,
               ),
               itemCount: state.notes.length,
               itemBuilder: (_, index) {
                 final note = state.notes[index];
-                return Stack(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white,
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          width: 1,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              note.title,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: scaleFont(16),
-                              ),
-                            ),
-                            Container(
-                              height: 0.5,
-                              width: double.infinity,
-                              color: Colors.grey.shade300,
-                              margin: EdgeInsets.symmetric(vertical: 4),
-                            ),
 
-                            Expanded(
-                              child: Text(
-                                note.message,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: scaleFont(14)),
-                              ),
+                if (note.type == NoteType.note) {
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: context.read<NotesCubit>(),
+                            child: NoteViewPage(
+                              noteId: note.noteId,
+                              userId: note.uid,
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      );
+                    },
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  note.title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: scaleFont(16),
+                                  ),
+                                ),
+                                Container(
+                                  height: 0.5,
+                                  width: double.infinity,
+                                  color: Colors.grey.shade300,
+                                  margin: EdgeInsets.symmetric(vertical: 4),
+                                ),
+
+                                Expanded(
+                                  child: Text(
+                                    note.message,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: scaleFont(14),
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              context.read<NotesCubit>().deleteNote(
+                                note.noteId,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          context.read<NotesCubit>().deleteNote(note.noteId);
-                        },
-                      ),
+                  );
+                } else {
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: context.read<NotesCubit>(),
+                            child: NoteViewPage(
+                              noteId: note.noteId,
+                              userId: note.uid,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  note.title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: scaleFont(16),
+                                  ),
+                                ),
+                                Container(
+                                  height: 0.5,
+                                  width: double.infinity,
+                                  color: Colors.grey.shade300,
+                                  margin: EdgeInsets.symmetric(vertical: 4),
+                                ),
+
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount: note.items.length,
+                                    itemBuilder: (context, itemIndex) {
+                                      final item = note.items[itemIndex];
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 2,
+                                        ),
+                                        child: Text(
+                                          '${item.name} - ${item.weight} • ₹${item.price}',
+                                          style: TextStyle(
+                                            fontSize: scaleFont(14),
+                                            decoration: item.isBought
+                                                ? TextDecoration.lineThrough
+                                                : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              context.read<NotesCubit>().deleteNote(
+                                note.noteId,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                );
+                  );
+                }
               },
             );
           },
