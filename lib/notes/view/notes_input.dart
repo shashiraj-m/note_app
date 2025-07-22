@@ -93,27 +93,9 @@ class _NoteInputDialogState extends State<NoteInputDialog> {
                   decoration: const InputDecoration(labelText: 'Weight'),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  initialValue: item.price.toString(),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) {
-                    final price = double.tryParse(val) ?? 0.0;
-                    updateItem(index, item.copyWith(price: price));
-                  },
-                  decoration: const InputDecoration(labelText: 'Price'),
-                ),
-              ),
-              Checkbox(
-                value: item.isBought,
-                onChanged: (val) {
-                  updateItem(index, item.copyWith(isBought: val ?? false));
-                },
-              ),
+
               IconButton(
-                icon: const Icon(Icons.delete),
+                icon: const Icon(Icons.delete, color: Color(0xFFE53935)),
                 onPressed: () => removeItem(index),
               ),
             ],
@@ -134,6 +116,7 @@ class _NoteInputDialogState extends State<NoteInputDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Color(0xFFFFF8E5),
       title: const Text('Add New Entry'),
       content: SingleChildScrollView(
         child: Column(

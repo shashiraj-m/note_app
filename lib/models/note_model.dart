@@ -19,7 +19,7 @@ class GroceryItem {
     return GroceryItem(
       name: map['name'] ?? '',
       weight: map['weight'] ?? '',
-      price: (map['price'] ?? 0).toDouble(),
+      price: (map['price'] ?? 0.0).toDouble(),
       isBought: map['isBought'] ?? false,
     );
   }
@@ -46,13 +46,12 @@ class GroceryItem {
       isBought: isBought ?? this.isBought,
     );
   }
+
   @override
   String toString() {
     return 'GroceryItem(name: $name, weight: $weight, price: $price, isBought: $isBought)';
   }
-
 }
-
 
 class Note {
   final String noteId;
@@ -124,7 +123,7 @@ class Note {
     );
   }
 
-   @override
+  @override
   String toString() {
     return 'Note(noteId: $noteId, uid: $uid, title: $title, message: $message, createdAt: $createdAt, type: $type, items: $items)';
   }

@@ -29,12 +29,12 @@ class _NoteViewPageState extends State<NoteViewPage> {
       widget.noteId,
       widget.userId,
     );
-    final note = context.read<NotesCubit>().state.editingNote;
-    
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double scaleFont(double base) => screenWidth < 600 ? base : base * 1.2;
     return BlocBuilder<NotesCubit, NotesState>(
       builder: (context, state) {
         final note = state.editingNote;
@@ -58,16 +58,23 @@ class _NoteViewPageState extends State<NoteViewPage> {
         return Scaffold(
           appBar: AppBar(title: Text(note!.title), centerTitle: true),
           body: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(5.0),
             child: isListNote
                 ? _buildListView(context, note)
                 : Text(note.message),
           ),
           floatingActionButton: isListNote
               ? FloatingActionButton.extended(
+                  backgroundColor: Color(0xFFF9BDAE),
                   onPressed: () => _showAddItemDialog(context, note),
-                  label: Text('Add Item'),
-                  icon: const Icon(Icons.edit),
+                  label: Text(
+                    'Add Item',
+                    style: TextStyle(
+                      fontSize: scaleFont(14),
+                      color: Color(0xFF4682C4),
+                    ),
+                  ),
+                  icon: const Icon(Icons.edit, color: Color(0xFF4682C4)),
                 )
               : null,
           bottomNavigationBar: isListNote
@@ -91,14 +98,14 @@ class _NoteViewPageState extends State<NoteViewPage> {
                           Text(
                             'Bought Items: $boughtItems/$totalItems',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: scaleFont(16),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
                             'Total: ₹${total.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              fontSize: 16,
+                            style: TextStyle(
+                              fontSize: scaleFont(16),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -154,7 +161,7 @@ class _NoteViewPageState extends State<NoteViewPage> {
                   final updatedNote = note.copyWith(items: updatedItems);
                   final cubit = context.read<NotesCubit>();
                   cubit.updateNote(updatedNote);
-                
+
                   cubit.emit(cubit.state.copyWith(editingNote: updatedNote));
 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -162,17 +169,14 @@ class _NoteViewPageState extends State<NoteViewPage> {
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10.0,
-                    vertical: 5,
-                  ),
+                  padding: const EdgeInsets.only(right: 15, bottom: 5, top: 5),
                   child: Row(
                     children: [
                       Checkbox(
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         checkColor: Colors.white,
-                        focusColor: Colors.greenAccent,
-                        activeColor: Colors.greenAccent,
+                        focusColor: Color(0XFF63B687),
+                        activeColor: Color(0XFF63B687),
                         value: item.isBought,
                         onChanged: (val) {
                           final updatedItem = item.copyWith(
@@ -181,7 +185,10 @@ class _NoteViewPageState extends State<NoteViewPage> {
                           _updateItem(context, note, updatedItem);
                         },
                       ),
-                      Expanded(flex: 3, child: Text(item.name)),
+                      Expanded(
+                        flex: 3,
+                        child: Text(item.name, style: TextStyle(fontSize: 16)),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         flex: 2,
@@ -257,6 +264,7 @@ class _NoteViewPageState extends State<NoteViewPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Color(0xFFFFF8E5),
           title: const Text('Add New Item'),
           content: Column(
             mainAxisSize: MainAxisSize.min,

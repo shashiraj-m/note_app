@@ -28,15 +28,13 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          scaffoldBackgroundColor: Colors.white,
+          scaffoldBackgroundColor: Color(0xFFFFF8E5),
           appBarTheme: AppBarTheme(backgroundColor: Colors.white),
         ),
         home: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
             if (state.status == AuthStatus.loading) {
-              return  Scaffold(
-                body: homeScreen(),
-              );
+              return Scaffold(body: homeScreen());
             } else if (state.status == AuthStatus.authenticated) {
               return const NotesPage();
             } else {
