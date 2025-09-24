@@ -16,7 +16,8 @@ class NoteViewPage extends StatefulWidget {
 }
 
 class _NoteViewPageState extends State<NoteViewPage> {
-  Note? currentNote;
+  final Map<String, TextEditingController> _priceControllers = {};
+  final Map<String, TextEditingController> _weightControllers = {};
 
   @override
   void initState() {
@@ -31,10 +32,38 @@ class _NoteViewPageState extends State<NoteViewPage> {
     );
   }
 
+  TextEditingController _getPriceController(GroceryItem item) {
+    if (!_priceControllers.containsKey(item.name)) {
+      _priceControllers[item.name] = TextEditingController(
+        text: item.price.toStringAsFixed(0),
+      );
+    }
+    return _priceControllers[item.name]!;
+  }
+
+  TextEditingController _getWeightController(GroceryItem item) {
+    if (!_weightControllers.containsKey(item.name)) {
+      _weightControllers[item.name] = TextEditingController(text: item.weight);
+    }
+    return _weightControllers[item.name]!;
+  }
+
+  @override
+  void dispose() {
+    for (var c in _priceControllers.values) {
+      c.dispose();
+    }
+    for (var c in _weightControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double scaleFont(double base) => screenWidth < 600 ? base : base * 1.2;
+
     return BlocBuilder<NotesCubit, NotesState>(
       builder: (context, state) {
         final note = state.editingNote;
@@ -65,53 +94,59 @@ class _NoteViewPageState extends State<NoteViewPage> {
           ),
           floatingActionButton: isListNote
               ? FloatingActionButton.extended(
-                  backgroundColor: Color(0xFFF9BDAE),
+                  backgroundColor: const Color(0xFFF9BDAE),
                   onPressed: () => _showAddItemDialog(context, note),
                   label: Text(
                     'Add Item',
                     style: TextStyle(
                       fontSize: scaleFont(14),
-                      color: Color(0xFF4682C4),
+                      color: const Color(0xFF4682C4),
                     ),
                   ),
                   icon: const Icon(Icons.edit, color: Color(0xFF4682C4)),
                 )
               : null,
           bottomNavigationBar: isListNote
-              ? BottomAppBar(
-                  color: Colors.white,
-                  height: 50,
-                  child: BlocBuilder<NotesCubit, NotesState>(
-                    builder: (context, state) {
-                      final total =
-                          state.editingNote?.items
-                              .where((i) => i.isBought)
-                              .fold(0.0, (sum, i) => sum + (i.price)) ??
-                          0.0;
-                      final totalItems = note.items.length;
-                      final boughtItems = note.items
-                          .where((item) => item.isBought)
-                          .length;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Bought Items: $boughtItems/$totalItems',
-                            style: TextStyle(
-                              fontSize: scaleFont(16),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'Total: ₹${total.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: scaleFont(16),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+              ? Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: BottomAppBar(
+                      color: Colors.white,
+                      height: 50,
+                      child: BlocBuilder<NotesCubit, NotesState>(
+                        builder: (context, state) {
+                          final total =
+                              state.editingNote?.items
+                                  .where((i) => i.isBought)
+                                  .fold(0.0, (sum, i) => sum + (i.price)) ??
+                              0.0;
+                          final totalItems = note.items.length;
+                          final boughtItems = note.items
+                              .where((item) => item.isBought)
+                              .length;
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Bought Items: $boughtItems/$totalItems',
+                                style: TextStyle(
+                                  fontSize: scaleFont(16),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                'Total: ₹${total.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: scaleFont(16),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 )
               : null,
@@ -132,21 +167,10 @@ class _NoteViewPageState extends State<NoteViewPage> {
             itemCount: sortedItems.length,
             itemBuilder: (context, index) {
               final item = sortedItems[index];
-              final priceController = TextEditingController(
-                text: item.price.toStringAsFixed(0),
-              );
-              final weightController = TextEditingController(text: item.weight);
 
-              final weightFocus = FocusNode();
+              final weightController = _getWeightController(item);
+              final priceController = _getPriceController(item);
 
-              weightFocus.addListener(() {
-                if (!weightFocus.hasFocus) {
-                  final updatedItem = item.copyWith(
-                    weight: weightController.text,
-                  );
-                  _updateItem(context, note, updatedItem);
-                }
-              });
               return Dismissible(
                 key: Key('${item.name}-$index'),
                 direction: DismissDirection.endToStart,
@@ -161,7 +185,6 @@ class _NoteViewPageState extends State<NoteViewPage> {
                   final updatedNote = note.copyWith(items: updatedItems);
                   final cubit = context.read<NotesCubit>();
                   cubit.updateNote(updatedNote);
-
                   cubit.emit(cubit.state.copyWith(editingNote: updatedNote));
 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -175,8 +198,8 @@ class _NoteViewPageState extends State<NoteViewPage> {
                       Checkbox(
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         checkColor: Colors.white,
-                        focusColor: Color(0XFF63B687),
-                        activeColor: Color(0XFF63B687),
+                        focusColor: const Color(0XFF63B687),
+                        activeColor: const Color(0XFF63B687),
                         value: item.isBought,
                         onChanged: (val) {
                           final updatedItem = item.copyWith(
@@ -187,15 +210,16 @@ class _NoteViewPageState extends State<NoteViewPage> {
                       ),
                       Expanded(
                         flex: 3,
-                        child: Text(item.name, style: TextStyle(fontSize: 16)),
+                        child: Text(
+                          item.name,
+                          style: const TextStyle(fontSize: 16),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         flex: 2,
                         child: TextField(
                           controller: weightController,
-                          focusNode: weightFocus,
-                          keyboardType: TextInputType.text,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             labelText: 'Weight',
@@ -206,10 +230,8 @@ class _NoteViewPageState extends State<NoteViewPage> {
                               vertical: 4,
                             ),
                           ),
-
-                          onSubmitted: (value) {
+                          onChanged: (value) {
                             final updatedItem = item.copyWith(weight: value);
-
                             _updateItem(context, note, updatedItem);
                           },
                         ),
@@ -219,11 +241,6 @@ class _NoteViewPageState extends State<NoteViewPage> {
                         flex: 2,
                         child: TextField(
                           controller: priceController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             labelText: 'Price',
@@ -233,14 +250,14 @@ class _NoteViewPageState extends State<NoteViewPage> {
                               vertical: 4,
                             ),
                           ),
-                          onSubmitted: (value) {
-                            final newPrice = double.tryParse(value);
-                            if (newPrice != null && newPrice != item.price) {
-                              final updatedItem = item.copyWith(
-                                price: newPrice,
-                              );
-                              _updateItem(context, note, updatedItem);
-                            }
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          onChanged: (value) {
+                            final newPrice = double.tryParse(value) ?? 0.0;
+                            final updatedItem = item.copyWith(price: newPrice);
+                            _updateItem(context, note, updatedItem);
                           },
                         ),
                       ),
@@ -264,7 +281,7 @@ class _NoteViewPageState extends State<NoteViewPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFF8E5),
+          backgroundColor: const Color(0xFFFFF8E5),
           title: const Text('Add New Item'),
           content: Column(
             mainAxisSize: MainAxisSize.min,

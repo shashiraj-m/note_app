@@ -5,6 +5,7 @@ import 'package:note_app/auth/auth_status.dart';
 import 'package:note_app/auth/cubit/auth_cubit.dart';
 import 'package:note_app/auth/view/signin_page.dart';
 import 'package:note_app/custom_widgets/shimmer_loader.dart';
+
 import 'package:note_app/firebase_options.dart';
 import 'package:note_app/notes/cubit/note_cubit.dart';
 import 'package:note_app/notes/view/notes_page.dart';

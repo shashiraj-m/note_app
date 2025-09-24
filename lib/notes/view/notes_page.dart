@@ -59,10 +59,14 @@ class _NotesPageState extends State<NotesPage> {
             ),
           ],
         ),
+
         floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: Color(0xFFF9BDAE),
+          backgroundColor: Color(0xFFF9BDAE),
           onPressed: _openNoteDialog,
-          label: Text("Add Note", style: TextStyle(fontSize: scaleFont(14), color: Color(0xFF4682C4))),
+          label: Text(
+            "Add Note",
+            style: TextStyle(fontSize: scaleFont(14), color: Color(0xFF4682C4)),
+          ),
           icon: const Icon(Icons.edit, color: Color(0xFF4682C4)),
         ),
         body: BlocBuilder<NotesCubit, NotesState>(
@@ -80,7 +84,8 @@ class _NotesPageState extends State<NotesPage> {
                 crossAxisCount: isTablet ? 2 : 1,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                mainAxisExtent: isTablet ? 120 : 100,
+
+                mainAxisExtent: isTablet ? 150 : 120,
               ),
               itemCount: state.notes.length,
               itemBuilder: (_, index) {
@@ -152,7 +157,9 @@ class _NotesPageState extends State<NotesPage> {
                           right: -2,
                           top: -2,
                           child: IconButton(
-                            icon: const Icon(Icons.delete, color: Color(0xFFE53935),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Color(0xFFE53935),
                             ),
                             onPressed: () {
                               context.read<NotesCubit>().deleteNote(
